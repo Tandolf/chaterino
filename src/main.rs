@@ -1,6 +1,7 @@
 mod events;
 mod components;
 mod app;
+mod state;
 
 use std::{error::Error, io::{stdout}};
 

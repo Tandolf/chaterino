@@ -1,6 +1,11 @@
-use tui::{backend::Backend, Frame, layout::{Constraint, Direction, Layout}, widgets::{Block, BorderType, Borders}};
+use std::process;
 
-use super::Render;
+use termion::event::{Key};
+use tui::{backend::Backend, Frame, widgets::{Block, BorderType, Borders}};
+
+use crate::events::{Event, EventHandler};
+
+use super::{Component};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Chat {
@@ -13,7 +18,7 @@ impl Chat {
     }
 }
 
-impl<B: Backend> Render<B> for Chat {
+impl<B: Backend> Component<B> for Chat {
     fn render(&self, f: &mut Frame<B>) {
         
         let size = f.size();
@@ -23,4 +28,15 @@ impl<B: Backend> Render<B> for Chat {
                 .border_type(BorderType::Rounded);
             f.render_widget(block, size);
     }
+
+    fn update(&self, events: &EventHandler) {
+
+        if let Event::Input(k) = events.next().unwrap() {
+            if k == Key::Char('q') {
+                process::exit(0);
+            }
+        }
+
+    }
 }
+

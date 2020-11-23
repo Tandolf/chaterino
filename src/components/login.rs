@@ -1,6 +1,11 @@
+use std::{process};
+
+use termion::event::Key;
 use tui::{backend::Backend, Frame, layout::{Constraint, Direction, Layout}, widgets::{Block, BorderType, Borders}};
 
-use super::Render;
+use crate::events::{Event, EventHandler};
+
+use super::{Component};
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Login {
 
@@ -12,9 +17,8 @@ impl Login {
     }
 }
 
-impl<B: Backend> Render<B> for Login {
+impl<B: Backend> Component<B> for Login {
     fn render(&self, f: &mut Frame<B>) {
-        
         let size = f.size();
             let block = Block::default()
                 .borders(Borders::ALL)
@@ -40,5 +44,13 @@ impl<B: Backend> Render<B> for Login {
             .border_type(BorderType::Rounded);
             
             f.render_widget(main, chunks[0]);
+    }
+
+    fn update(&self, events: &EventHandler) {
+        if let Event::Input(k) = events.next().unwrap() {
+            if k == Key::Char('q') {
+                process::exit(0);
+            }
+        }
     }
 }

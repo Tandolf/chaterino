@@ -1,9 +1,8 @@
-use std::{collections::HashMap, error::Error, io::{self, stdout}};
+use std::{collections::HashMap, error::Error, io::{self}};
 
-use termion::raw::IntoRawMode;
-use tui::{Terminal, backend::{Backend, TermionBackend}};
+use tui::{Terminal, backend::{Backend}};
 
-use crate::{components::{chat::Chat, Render, login::Login}, events::EventHandler};
+use crate::{components::{chat::Chat, Component, login::Login}, events::EventHandler, state::State};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub enum Windows {
@@ -13,8 +12,8 @@ pub enum Windows {
 
 pub struct App<B: Backend> {
     event_handler: EventHandler,
-    windows: HashMap::<Windows, Box<dyn Render<B>>>,
-    current_window: Windows,
+    windows: HashMap::<Windows, Box<dyn Component<B>>>,
+    state: State,
     terminal: Terminal<B>
 }
 
@@ -25,7 +24,7 @@ impl<B: Backend> App<B> {
 
         let event_handler = EventHandler::new();
 
-        let mut windows = HashMap::<Windows, Box<dyn Render<B>>>::new();
+        let mut windows = HashMap::<Windows, Box<dyn Component<B>>>::new();
 
         let login = Login::new();
         let chat = Chat::new();
@@ -33,8 +32,10 @@ impl<B: Backend> App<B> {
         windows.insert(Windows::Login, Box::new(login));
         windows.insert(Windows::Chat, Box::new(chat));
 
-        Ok(App { 
-            current_window: Windows::Login, 
+        let state = State::new(Windows::Login);
+
+        Ok(App {
+            state,
             windows, 
             event_handler: event_handler, 
             terminal 
@@ -46,13 +47,19 @@ impl<B: Backend> App<B> {
         self.terminal.clear()?;
 
         let windows = &self.windows;
-        let current = &self.current_window;
+        let state = &self.state;
+        let events = &self.event_handler;
 
         loop {
             self.terminal.draw(|f| {
-                windows.get(current).unwrap().render(f);
-            })?
+                let current = windows.get(state.get_current_window()).unwrap();
+                current.render(f);
+            })?;
+
+            let current = windows.get(state.get_current_window()).unwrap();
+            current.update(&events);
         }
+
     }
 }
 
